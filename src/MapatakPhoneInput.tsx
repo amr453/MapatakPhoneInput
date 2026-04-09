@@ -202,7 +202,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
   const searchInputProps = { dir: isRtl ? "rtl" as const : "ltr" as const };
 
   return (
-    <Box ref={anchorRef} sx={S_ROOT(fullWidth)}>
+    <Box ref={anchorRef} dir="ltr" sx={S_ROOT(fullWidth)}>
       <TextField
         inputRef={inputRef}
         value={phoneNumber}

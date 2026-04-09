@@ -196,7 +196,6 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
     style: {
       fontSize: "16px",
       letterSpacing: "0.5px",
-      fontFamily: '"Roboto", "Inter", monospace',
     },
   };
 

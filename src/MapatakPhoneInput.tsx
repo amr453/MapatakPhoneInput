@@ -268,6 +268,10 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
       dir="ltr"
       className={cn("relative", fullWidth ? "w-full" : "w-auto")}
     >
+      {/* One-time WebKit scrollbar styling for the country list — applies
+          to the `.mapatak-phone-scroll` class set on the inner list, so
+          consumers do not have to import a stylesheet. */}
+      <style>{`.mapatak-phone-scroll::-webkit-scrollbar{width:8px;height:8px}.mapatak-phone-scroll::-webkit-scrollbar-track{background:transparent}.mapatak-phone-scroll::-webkit-scrollbar-thumb{background:rgba(15,23,42,0.18);border-radius:8px}.mapatak-phone-scroll::-webkit-scrollbar-thumb:hover{background:rgba(15,23,42,0.32)}`}</style>
       {/* Label */}
       {label && (
         <label
@@ -277,24 +281,46 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             sz.labelSize,
             disabled && "opacity-50"
           )}
+          style={{
+            display: "block",
+            marginBottom: 6,
+            fontWeight: 600,
+            fontSize: 13,
+            color: "#334155",
+            opacity: disabled ? 0.5 : 1,
+          }}
         >
           {label}
-          {required && <span className="ms-0.5 text-error" aria-hidden="true">*</span>}
+          {required && (
+            <span style={{ marginInlineStart: 2, color: "#ef4444" }} aria-hidden="true">
+              *
+            </span>
+          )}
         </label>
       )}
 
-      {/* Input row — flag button + phone field */}
+      {/* Input row — flag button + phone field. Inline-style fallbacks
+          ensure the field renders correctly even in apps that don't scan
+          this library for Tailwind classes (e.g. when the consuming
+          app's `@source` directive is restricted to its own src tree). */}
       <div
         className={cn(
           "flex items-center rounded-lg border bg-white transition-colors",
           "dark:bg-gray-800",
-          "focus-within:border-primary focus-within:ring-1 focus-within:ring-primary",
           sz.height,
-          showError
-            ? "border-error focus-within:border-error focus-within:ring-error"
-            : "border-gray-300 dark:border-gray-600",
+          showError ? "border-red-500" : "border-slate-300 dark:border-slate-600",
           disabled && "cursor-not-allowed opacity-50 bg-gray-100 dark:bg-gray-900"
         )}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+          height: size === "small" ? 40 : 48,
+          background: "#ffffff",
+          border: `1px solid ${showError ? "#ef4444" : "#cbd5e1"}`,
+          borderRadius: 12,
+          transition: "border-color 120ms ease, box-shadow 120ms ease",
+        }}
       >
         {/* Flag / Dial code trigger */}
         <button
@@ -311,14 +337,38 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             "text-gray-800 dark:text-gray-200",
             "hover:bg-gray-50 dark:hover:bg-gray-700",
             "rounded-s-lg",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+            "focus:outline-none",
             "disabled:cursor-not-allowed"
           )}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            height: "100%",
+            padding: "0 12px",
+            color: "#1f2937",
+            background: "transparent",
+            cursor: disabled ? "not-allowed" : "pointer",
+            borderTopLeftRadius: 12,
+            borderBottomLeftRadius: 12,
+            outline: "none",
+            border: "none",
+            fontFamily: "inherit",
+          }}
         >
-          <span className="text-xl leading-none" aria-hidden="true">
+          <span style={{ fontSize: 20, lineHeight: 1 }} aria-hidden="true">
             {selectedCountry.flag}
           </span>
-          <span className="font-mono text-sm font-medium tabular-nums">
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              fontVariantNumeric: "tabular-nums",
+              color: "#1f2937",
+              minWidth: 36,
+              textAlign: "left",
+            }}
+          >
             +{selectedCountry.dialCode}
           </span>
           <ChevronDownIcon className="text-gray-500" />
@@ -327,7 +377,14 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
         {/* Divider */}
         <span
           aria-hidden="true"
-          className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-600"
+          style={{
+            display: "inline-block",
+            width: 1,
+            height: 22,
+            background: "#e2e8f0",
+            margin: "0 4px",
+            flexShrink: 0,
+          }}
         />
 
         {/* Phone number input */}
@@ -341,17 +398,32 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
           onChange={handlePhoneChange}
           disabled={disabled}
           required={required}
-          placeholder={placeholder || selectedCountry.exampleNumber}
+          placeholder={
+            placeholder ||
+            `${(localeData.ui.examplePrefix as string | undefined) ?? ""}${selectedCountry.exampleNumber}`
+          }
           maxLength={selectedCountry.maxLength + 1}
           aria-invalid={showError || undefined}
           aria-describedby={helperMsg ? `${inputId}-helper` : undefined}
-          style={{ fontSize: "16px", letterSpacing: "0.5px" }}
           className={cn(
             "flex-1 h-full bg-transparent outline-none border-0",
             "text-gray-900 dark:text-white placeholder:text-gray-400",
             sz.paddingX,
             "disabled:cursor-not-allowed"
           )}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            height: "100%",
+            padding: "0 14px",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            color: "#0f172a",
+            fontSize: 14,
+            letterSpacing: "0.3px",
+            fontFamily: "inherit",
+          }}
         />
       </div>
 
@@ -362,14 +434,19 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
           role={showError ? "alert" : undefined}
           className={cn(
             "mt-1 text-xs",
-            showError ? "text-error" : "text-gray-500 dark:text-gray-400"
+            showError ? "text-red-500" : "text-gray-500 dark:text-gray-400"
           )}
+          style={{
+            marginTop: 4,
+            fontSize: 12,
+            color: showError ? "#ef4444" : "#64748b",
+          }}
         >
           {helperMsg}
         </p>
       )}
 
-      {/* Dropdown panel */}
+      {/* Dropdown panel — fixed-height + scroll, even without Tailwind */}
       {dropdownOpen && (
         <div
           dir={isRtl ? "rtl" : "ltr"}
@@ -377,15 +454,41 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
           aria-label="Select country"
           className={cn(
             "absolute inset-x-0 top-full z-50 mt-1",
-            "flex max-h-[360px] flex-col overflow-hidden",
+            "flex flex-col overflow-hidden",
             "rounded-lg border border-gray-200 dark:border-gray-700",
             "bg-white dark:bg-gray-800",
             "shadow-lg"
           )}
-          style={{ boxShadow: "-20px 20px 40px -4px rgba(145,158,171,0.24), 0 0 2px 0 rgba(145,158,171,0.24)" }}
+          style={{
+            position: "absolute",
+            insetInlineStart: 0,
+            insetInlineEnd: 0,
+            top: "100%",
+            marginTop: 6,
+            zIndex: 50,
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: 320,
+            overflow: "hidden",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 14,
+            boxShadow:
+              "0 12px 32px -8px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.06)",
+          }}
         >
           {/* Search */}
-          <div className="flex items-center gap-2 border-b border-gray-200 p-3 dark:border-gray-700">
+          <div
+            className="flex items-center gap-2 border-b border-gray-200 p-3 dark:border-gray-700"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: 12,
+              borderBottom: "1px solid #e2e8f0",
+              flexShrink: 0,
+            }}
+          >
             <SearchIcon className="text-gray-500" />
             <input
               ref={searchRef}
@@ -398,17 +501,40 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                 "h-8 w-full bg-transparent outline-none border-0",
                 "text-sm text-gray-900 dark:text-white placeholder:text-gray-400"
               )}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                height: 32,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#0f172a",
+                fontSize: 14,
+                fontFamily: "inherit",
+              }}
             />
           </div>
 
-          {/* Country list */}
+          {/* Country list — scroll lives here. The scrollbar is forced
+              into a light theme so it stays visible on light surfaces
+              even when the user agent's color-scheme picks dark. */}
           <div
             role="listbox"
             aria-label="Countries"
-            className="flex-1 overflow-y-auto"
+            className="flex-1 overflow-y-auto mapatak-phone-scroll"
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              overscrollBehavior: "contain",
+              colorScheme: "light",
+              scrollbarWidth: "thin",
+              scrollbarColor: "rgba(15,23,42,0.18) transparent",
+            }}
           >
             {sortedAndFiltered.map((c) => {
               const active = c.isoCode === selectedCountry.isoCode;
+              const localName = names[c.isoCode] || c.isoCode;
               return (
                 <button
                   key={c.isoCode}
@@ -420,18 +546,57 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                     "flex w-full items-center gap-3 px-4 py-2 text-start text-sm transition-colors",
                     "hover:bg-gray-100 dark:hover:bg-gray-700",
                     "focus:outline-none focus-visible:bg-gray-100 dark:focus-visible:bg-gray-700",
-                    active && "bg-primary-50 dark:bg-primary-900/20"
+                    active && "bg-blue-50 dark:bg-blue-900/20"
                   )}
+                  style={{
+                    display: "flex",
+                    width: "100%",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "10px 16px",
+                    background: active ? "rgba(59,130,246,0.08)" : "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#1e293b",
+                    fontSize: 14,
+                    textAlign: isRtl ? "right" : "left",
+                    fontFamily: "inherit",
+                  }}
                 >
-                  <span className="w-7 text-center text-xl leading-none" aria-hidden="true">
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      display: "inline-block",
+                      width: 28,
+                      textAlign: "center",
+                      fontSize: 20,
+                      lineHeight: 1,
+                      flexShrink: 0,
+                    }}
+                  >
                     {c.flag}
                   </span>
-                  <span className="flex-1 text-gray-800 dark:text-gray-100">
-                    {names[c.isoCode] || c.isoCode}
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      color: "#1e293b",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      fontWeight: active ? 600 : 400,
+                    }}
+                  >
+                    {localName}
                   </span>
                   <span
                     dir="ltr"
-                    className="font-mono text-xs text-gray-500 dark:text-gray-400 tabular-nums"
+                    style={{
+                      fontVariantNumeric: "tabular-nums",
+                      fontSize: 12,
+                      color: "#64748b",
+                      flexShrink: 0,
+                    }}
                   >
                     +{c.dialCode}
                   </span>
@@ -440,7 +605,14 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             })}
 
             {sortedAndFiltered.length === 0 && (
-              <div className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+              <div
+                style={{
+                  padding: "32px 16px",
+                  textAlign: "center",
+                  fontSize: 13,
+                  color: "#94a3b8",
+                }}
+              >
                 {localeData.ui.noResults}
               </div>
             )}

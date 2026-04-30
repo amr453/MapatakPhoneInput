@@ -206,6 +206,7 @@
   },
   "ui": {
     "searchPlaceholder": "Search country...",
-    "noResults": "No results"
+    "noResults": "No results",
+    "examplePrefix": "e.g. "
   }
 }

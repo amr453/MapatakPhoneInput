@@ -206,6 +206,7 @@
   },
   "ui": {
     "searchPlaceholder": "ملک تلاش کریں...",
-    "noResults": "کوئی نتیجہ نہیں"
+    "noResults": "کوئی نتیجہ نہیں",
+    "examplePrefix": "مثال: "
   }
 }

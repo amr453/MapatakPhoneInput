@@ -22,8 +22,30 @@ export interface PhoneValidationError {
 export const stripLeadingZero = (n: string): string =>
   n.startsWith("0") ? n.slice(1) : n;
 
+// Universal decimal-digit normalisation: convert every Unicode `Nd`
+// digit (Arabic ٠-٩, Persian ۰-۹, Bengali ০-৯, Devanagari ०-९, Thai ๐-๙,
+// Tamil ௦-௯, fullwidth ０-９, mathematical 𝟎-𝟗, etc.) to ASCII *before*
+// stripping non-digits — otherwise users on a non-Latin keyboard see
+// their number disappear silently (`/\D/` would strip those code points).
+//
+// Algorithm: for each Nd character, walk back through codepoints until a
+// non-Nd boundary is hit; the distance gives the digit value 0-9. Every
+// Nd block in Unicode is exactly 10 contiguous codepoints starting at
+// that script's "0", so this is reliable for every script.
+const toAsciiDigits = (val: string): string =>
+  val.replace(/\p{Nd}/gu, (d) => {
+    const cp = d.codePointAt(0)!;
+    if (cp >= 0x30 && cp <= 0x39) return d;
+    for (let off = 1; off <= 9; off++) {
+      if (!/\p{Nd}/u.test(String.fromCodePoint(cp - off))) {
+        return String(off - 1);
+      }
+    }
+    return "9";
+  });
+
 export const sanitizeInput = (raw: string): string =>
-  raw.replace(/\D/g, "");
+  toAsciiDigits(raw).replace(/\D/g, "");
 
 /**
  * Resolves i18n error template: replaces {key} with params[key].

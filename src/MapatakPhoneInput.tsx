@@ -230,7 +230,9 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
   );
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/[^\d]/g, "");
+    // `sanitizeInput` first normalises Arabic-Indic / Persian digits to
+    // ASCII so users on an ar / ur keyboard don't see their input vanish.
+    const raw = sanitizeInput(e.target.value);
     setPhoneNumber(raw);
     emitPayload(selectedCountry, raw);
   };

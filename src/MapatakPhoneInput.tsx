@@ -69,7 +69,7 @@ const SIZE_MAP = {
 // Inline icons (no MUI deps)
 // ---------------------------------------------------------------------------
 
-function ChevronDownIcon({ className }: { className?: string }) {
+function ChevronDownIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -80,6 +80,7 @@ function ChevronDownIcon({ className }: { className?: string }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       className={cn("size-4 shrink-0", className)}
+      style={style}
       aria-hidden="true"
     >
       <path d="m6 9 6 6 6-6" />
@@ -87,7 +88,7 @@ function ChevronDownIcon({ className }: { className?: string }) {
   );
 }
 
-function SearchIcon({ className }: { className?: string }) {
+function SearchIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -98,6 +99,7 @@ function SearchIcon({ className }: { className?: string }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       className={cn("size-4 shrink-0", className)}
+      style={style}
       aria-hidden="true"
     >
       <circle cx="11" cy="11" r="8" />
@@ -151,6 +153,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
   label,
   placeholder,
   required = false,
+  theme = "auto",
 }) => {
   const [selectedCountry, setSelectedCountry] = useState<CountryConfig>(
     () => getDefaultCountry(defaultCountryIso)
@@ -262,16 +265,24 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
   const reactId = React.useId();
   const inputId = `mapatak-phone-${reactId}`;
 
+  const themeClass =
+    theme === "light" ? "mpi-theme-light" : theme === "dark" ? "mpi-theme-dark" : "";
+
   return (
     <div
       ref={containerRef}
       dir="ltr"
-      className={cn("relative", fullWidth ? "w-full" : "w-auto")}
+      className={cn("mapatak-phone-root relative", themeClass, fullWidth ? "w-full" : "w-auto")}
     >
-      {/* One-time WebKit scrollbar styling for the country list — applies
-          to the `.mapatak-phone-scroll` class set on the inner list, so
-          consumers do not have to import a stylesheet. */}
-      <style>{`.mapatak-phone-scroll::-webkit-scrollbar{width:8px;height:8px}.mapatak-phone-scroll::-webkit-scrollbar-track{background:transparent}.mapatak-phone-scroll::-webkit-scrollbar-thumb{background:rgba(15,23,42,0.18);border-radius:8px}.mapatak-phone-scroll::-webkit-scrollbar-thumb:hover{background:rgba(15,23,42,0.32)}`}</style>
+      {/* Self-contained theming.
+          - Light is the default palette (defined on `.mapatak-phone-root`).
+          - Dark activates automatically when any ancestor carries `.dark`
+            (the standard Tailwind dark-mode class).
+          - Consumers can force a palette via the `theme` prop, which
+            applies `mpi-theme-light` / `mpi-theme-dark` and wins over
+            ancestor-based detection — useful for surfaces that are
+            intentionally always-light (e.g. sign-in split panels). */}
+      <style>{`.mapatak-phone-root{--mpi-bg:#ffffff;--mpi-bg-disabled:#f3f4f6;--mpi-text:#0f172a;--mpi-text-secondary:#64748b;--mpi-text-muted:#94a3b8;--mpi-label:#334155;--mpi-border:#cbd5e1;--mpi-divider:#e2e8f0;--mpi-hover:rgba(15,23,42,0.04);--mpi-active:rgba(59,130,246,0.08);--mpi-error:#ef4444;--mpi-shadow:0 12px 32px -8px rgba(15,23,42,0.18),0 2px 6px rgba(15,23,42,0.06);--mpi-scroll-thumb:rgba(15,23,42,0.18);--mpi-scroll-thumb-hover:rgba(15,23,42,0.32);color-scheme:light}.dark .mapatak-phone-root,.mapatak-phone-root.mpi-theme-dark{--mpi-bg:#1e2022;--mpi-bg-disabled:rgba(255,255,255,0.04);--mpi-text:#ffffff;--mpi-text-secondary:rgba(255,255,255,0.65);--mpi-text-muted:rgba(255,255,255,0.40);--mpi-label:rgba(255,255,255,0.78);--mpi-border:rgba(255,255,255,0.12);--mpi-divider:rgba(255,255,255,0.10);--mpi-hover:rgba(255,255,255,0.06);--mpi-active:rgba(59,130,246,0.18);--mpi-error:#f87171;--mpi-shadow:0 20px 60px rgba(0,0,0,0.7),0 4px 16px rgba(0,0,0,0.4);--mpi-scroll-thumb:rgba(255,255,255,0.20);--mpi-scroll-thumb-hover:rgba(255,255,255,0.32);color-scheme:dark}.dark .mapatak-phone-root.mpi-theme-light,.mapatak-phone-root.mpi-theme-light{--mpi-bg:#ffffff;--mpi-bg-disabled:#f3f4f6;--mpi-text:#0f172a;--mpi-text-secondary:#64748b;--mpi-text-muted:#94a3b8;--mpi-label:#334155;--mpi-border:#cbd5e1;--mpi-divider:#e2e8f0;--mpi-hover:rgba(15,23,42,0.04);--mpi-active:rgba(59,130,246,0.08);--mpi-error:#ef4444;--mpi-shadow:0 12px 32px -8px rgba(15,23,42,0.18),0 2px 6px rgba(15,23,42,0.06);--mpi-scroll-thumb:rgba(15,23,42,0.18);--mpi-scroll-thumb-hover:rgba(15,23,42,0.32);color-scheme:light}.mapatak-phone-scroll::-webkit-scrollbar{width:8px;height:8px}.mapatak-phone-scroll::-webkit-scrollbar-track{background:transparent}.mapatak-phone-scroll::-webkit-scrollbar-thumb{background:var(--mpi-scroll-thumb);border-radius:8px}.mapatak-phone-scroll::-webkit-scrollbar-thumb:hover{background:var(--mpi-scroll-thumb-hover)}`}</style>
       {/* Label */}
       {label && (
         <label
@@ -286,13 +297,13 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             marginBottom: 6,
             fontWeight: 600,
             fontSize: 13,
-            color: "#334155",
+            color: "var(--mpi-label)",
             opacity: disabled ? 0.5 : 1,
           }}
         >
           {label}
           {required && (
-            <span style={{ marginInlineStart: 2, color: "#ef4444" }} aria-hidden="true">
+            <span style={{ marginInlineStart: 2, color: "var(--mpi-error)" }} aria-hidden="true">
               *
             </span>
           )}
@@ -316,8 +327,8 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
           alignItems: "center",
           width: "100%",
           height: size === "small" ? 40 : 48,
-          background: "#ffffff",
-          border: `1px solid ${showError ? "#ef4444" : "#cbd5e1"}`,
+          background: disabled ? "var(--mpi-bg-disabled)" : "var(--mpi-bg)",
+          border: `1px solid ${showError ? "var(--mpi-error)" : "var(--mpi-border)"}`,
           borderRadius: 12,
           transition: "border-color 120ms ease, box-shadow 120ms ease",
         }}
@@ -346,7 +357,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             gap: 6,
             height: "100%",
             padding: "0 12px",
-            color: "#1f2937",
+            color: "var(--mpi-text)",
             background: "transparent",
             cursor: disabled ? "not-allowed" : "pointer",
             borderTopLeftRadius: 12,
@@ -364,14 +375,14 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
               fontSize: 14,
               fontWeight: 600,
               fontVariantNumeric: "tabular-nums",
-              color: "#1f2937",
+              color: "var(--mpi-text)",
               minWidth: 36,
               textAlign: "left",
             }}
           >
             +{selectedCountry.dialCode}
           </span>
-          <ChevronDownIcon className="text-gray-500" />
+          <ChevronDownIcon style={{ color: "var(--mpi-text-secondary)" }} />
         </button>
 
         {/* Divider */}
@@ -381,7 +392,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             display: "inline-block",
             width: 1,
             height: 22,
-            background: "#e2e8f0",
+            background: "var(--mpi-divider)",
             margin: "0 4px",
             flexShrink: 0,
           }}
@@ -419,7 +430,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             background: "transparent",
             border: "none",
             outline: "none",
-            color: "#0f172a",
+            color: "var(--mpi-text)",
             fontSize: 14,
             letterSpacing: "0.3px",
             fontFamily: "inherit",
@@ -439,7 +450,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
           style={{
             marginTop: 4,
             fontSize: 12,
-            color: showError ? "#ef4444" : "#64748b",
+            color: showError ? "var(--mpi-error)" : "var(--mpi-text-secondary)",
           }}
         >
           {helperMsg}
@@ -470,11 +481,10 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             flexDirection: "column",
             maxHeight: 320,
             overflow: "hidden",
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
+            background: "var(--mpi-bg)",
+            border: "1px solid var(--mpi-border)",
             borderRadius: 14,
-            boxShadow:
-              "0 12px 32px -8px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.06)",
+            boxShadow: "var(--mpi-shadow)",
           }}
         >
           {/* Search */}
@@ -485,11 +495,11 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
               alignItems: "center",
               gap: 8,
               padding: 12,
-              borderBottom: "1px solid #e2e8f0",
+              borderBottom: "1px solid var(--mpi-divider)",
               flexShrink: 0,
             }}
           >
-            <SearchIcon className="text-gray-500" />
+            <SearchIcon style={{ color: "var(--mpi-text-secondary)" }} />
             <input
               ref={searchRef}
               type="search"
@@ -508,16 +518,15 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                 background: "transparent",
                 border: "none",
                 outline: "none",
-                color: "#0f172a",
+                color: "var(--mpi-text)",
                 fontSize: 14,
                 fontFamily: "inherit",
               }}
             />
           </div>
 
-          {/* Country list — scroll lives here. The scrollbar is forced
-              into a light theme so it stays visible on light surfaces
-              even when the user agent's color-scheme picks dark. */}
+          {/* Country list — scrollbar styling is themed via CSS variables
+              defined on the root, so it inverts cleanly in dark mode. */}
           <div
             role="listbox"
             aria-label="Countries"
@@ -527,9 +536,8 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
               minHeight: 0,
               overflowY: "auto",
               overscrollBehavior: "contain",
-              colorScheme: "light",
               scrollbarWidth: "thin",
-              scrollbarColor: "rgba(15,23,42,0.18) transparent",
+              scrollbarColor: "var(--mpi-scroll-thumb) transparent",
             }}
           >
             {sortedAndFiltered.map((c) => {
@@ -554,10 +562,10 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                     alignItems: "center",
                     gap: 12,
                     padding: "10px 16px",
-                    background: active ? "rgba(59,130,246,0.08)" : "transparent",
+                    background: active ? "var(--mpi-active)" : "transparent",
                     border: "none",
                     cursor: "pointer",
-                    color: "#1e293b",
+                    color: "var(--mpi-text)",
                     fontSize: 14,
                     textAlign: isRtl ? "right" : "left",
                     fontFamily: "inherit",
@@ -580,7 +588,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                     style={{
                       flex: 1,
                       minWidth: 0,
-                      color: "#1e293b",
+                      color: "var(--mpi-text)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -594,7 +602,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                     style={{
                       fontVariantNumeric: "tabular-nums",
                       fontSize: 12,
-                      color: "#64748b",
+                      color: "var(--mpi-text-secondary)",
                       flexShrink: 0,
                     }}
                   >
@@ -610,7 +618,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                   padding: "32px 16px",
                   textAlign: "center",
                   fontSize: 13,
-                  color: "#94a3b8",
+                  color: "var(--mpi-text-muted)",
                 }}
               >
                 {localeData.ui.noResults}

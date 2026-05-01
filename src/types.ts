@@ -46,4 +46,14 @@ export interface MapatakPhoneInputProps {
   label?: string;
   placeholder?: string;
   required?: boolean;
+  /**
+   * Theme override.
+   * - "auto" (default): follows the host app's `.dark` ancestor class
+   * - "light" / "dark": forces the corresponding palette regardless of ancestor
+   *
+   * Use "light" inside surfaces that are intentionally always-light
+   * (e.g. split-panel sign-in / sign-up forms) so the phone input stays
+   * visually consistent with its container.
+   */
+  theme?: "auto" | "light" | "dark";
 }

@@ -3,3 +3,12 @@ dist/
 .claude/
 *.log
 .DS_Store
+
+# Yarn Berry / PnP generated artifacts (not source)
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

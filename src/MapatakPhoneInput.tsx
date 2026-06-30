@@ -4,6 +4,7 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { COUNTRIES_CONFIG, getDefaultCountry } from "./countries-config";
 import { validateAndBuildPayload, sanitizeInput, stripLeadingZero, resolveErrorMessage } from "./phone-validation";
+import { normalizeForSearch } from "./normalize";
 import type { CountryConfig, MapatakPhoneInputProps, PhonePayload, PhoneValidationError } from "./types";
 import arData from "./i18n/ar.json";
 import enData from "./i18n/en.json";
@@ -44,6 +45,35 @@ const LOCALE_MAP: Record<string, LocaleData> = {
   es: esData as LocaleData,
   ur: urData as LocaleData,
 };
+
+// ---------------------------------------------------------------------------
+// Search haystack — precomputed once at module load. For each country we
+// concatenate its ISO code, dial code, and the country name from every
+// supported locale (ar / en / es / ur), all passed through
+// normalizeForSearch. This lets the picker match a user's query against
+// names in any of the four languages (so "jordan", "الاردن", "الأردن",
+// "اردن", and "Jordania" all surface 🇯🇴) and tolerates Arabic letter
+// variants and Latin diacritics.
+// ---------------------------------------------------------------------------
+
+const SEARCH_HAYSTACK: Record<string, string> = (() => {
+  const out: Record<string, string> = {};
+  const locales: LocaleData[] = [
+    LOCALE_MAP.ar,
+    LOCALE_MAP.en,
+    LOCALE_MAP.es,
+    LOCALE_MAP.ur,
+  ];
+  for (const c of COUNTRIES_CONFIG) {
+    const parts: string[] = [c.isoCode, c.dialCode];
+    for (const loc of locales) {
+      const name = loc.countries[c.isoCode];
+      if (name) parts.push(name);
+    }
+    out[c.isoCode] = normalizeForSearch(parts.join(" "));
+  }
+  return out;
+})();
 
 // ---------------------------------------------------------------------------
 // Size map (aligned with @mapatak/ui-theme inputSizes scale)
@@ -183,15 +213,10 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
       return nA.localeCompare(nB, locale);
     });
     if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      list = list.filter((c) => {
-        const localName = (names[c.isoCode] || "").toLowerCase();
-        return (
-          c.isoCode.toLowerCase().includes(q) ||
-          c.dialCode.includes(q) ||
-          localName.includes(q)
-        );
-      });
+      const q = normalizeForSearch(searchTerm);
+      if (q) {
+        list = list.filter((c) => (SEARCH_HAYSTACK[c.isoCode] || "").includes(q));
+      }
     }
     return list;
   }, [searchTerm, names, locale]);

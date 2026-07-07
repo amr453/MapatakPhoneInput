@@ -1,17 +1,17 @@
 // Copyright (c) 2026 Mapatak Platform. All rights reserved.
 // PROPRIETARY & CONFIDENTIAL. Unauthorized copying, modification, or distribution is strictly prohibited.
 
-import { z } from "zod";
-import { getCountryByIso } from "./countries-config";
-import type { CountryConfig, PhonePayload } from "./types";
+import { z } from 'zod';
+import { getCountryByIso } from './countries-config';
+import type { CountryConfig, PhonePayload } from './types';
 
 // --- Error Types ---
 export type PhoneErrorKey =
-  | "required"
-  | "tooShort"
-  | "tooLong"
-  | "invalidPrefix"
-  | "invalidFormat";
+  | 'required'
+  | 'tooShort'
+  | 'tooLong'
+  | 'invalidPrefix'
+  | 'invalidFormat';
 
 export interface PhoneValidationError {
   key: PhoneErrorKey;
@@ -20,7 +20,7 @@ export interface PhoneValidationError {
 
 // --- Helpers ---
 export const stripLeadingZero = (n: string): string =>
-  n.startsWith("0") ? n.slice(1) : n;
+  n.startsWith('0') ? n.slice(1) : n;
 
 // Universal decimal-digit normalisation: convert every Unicode `Nd`
 // digit (Arabic ٠-٩, Persian ۰-۹, Bengali ০-৯, Devanagari ०-९, Thai ๐-๙,
@@ -41,43 +41,43 @@ const toAsciiDigits = (val: string): string =>
         return String(off - 1);
       }
     }
-    return "9";
+    return '9';
   });
 
 export const sanitizeInput = (raw: string): string =>
-  toAsciiDigits(raw).replace(/\D/g, "");
+  toAsciiDigits(raw).replace(/\D/g, '');
 
 /**
  * Resolves i18n error template: replaces {key} with params[key].
  */
 export const resolveErrorMessage = (
   template: string,
-  params?: Record<string, string | number>
+  params?: Record<string, string | number>,
 ): string => {
   if (!params) return template;
   return Object.entries(params).reduce(
     (msg, [k, v]) => msg.replace(`{${k}}`, String(v)),
-    template
+    template,
   );
 };
 
 // --- 5-Level Validator ---
 export const validatePhone = (
   isoCode: string,
-  rawInput: string
+  rawInput: string,
 ): PhoneValidationError | null => {
   const country = getCountryByIso(isoCode);
-  if (!country) return { key: "invalidFormat" };
+  if (!country) return { key: 'invalidFormat' };
 
   // 1) Required check
   const sanitized = sanitizeInput(rawInput);
   if (!sanitized || sanitized.length === 0) {
-    return { key: "required" };
+    return { key: 'required' };
   }
 
   // 2) Format check (non-digit chars in original)
-  if (/[^\d]/.test(rawInput.replace(/^0/, ""))) {
-    return { key: "invalidFormat" };
+  if (/[^\d]/.test(rawInput.replace(/^0/, ''))) {
+    return { key: 'invalidFormat' };
   }
 
   const cleaned = stripLeadingZero(sanitized);
@@ -90,12 +90,12 @@ export const validatePhone = (
     const prefixMatch = country.startsWith.some((p) =>
       cleaned.length >= p.length
         ? cleaned.startsWith(p)
-        : p.startsWith(cleaned)
+        : p.startsWith(cleaned),
     );
     if (!prefixMatch) {
       return {
-        key: "invalidPrefix",
-        params: { validPrefixes: country.startsWith.join(", ") },
+        key: 'invalidPrefix',
+        params: { validPrefixes: country.startsWith.join(', ') },
       };
     }
   }
@@ -103,7 +103,7 @@ export const validatePhone = (
   // 4) Too short
   if (cleaned.length < country.minLength) {
     return {
-      key: "tooShort",
+      key: 'tooShort',
       params: { minLength: country.minLength },
     };
   }
@@ -111,14 +111,14 @@ export const validatePhone = (
   // 5) Too long
   if (cleaned.length > country.maxLength) {
     return {
-      key: "tooLong",
+      key: 'tooLong',
       params: { maxLength: country.maxLength },
     };
   }
 
   // 6) Full regex check
   if (!country.regex.test(cleaned)) {
-    return { key: "invalidFormat" };
+    return { key: 'invalidFormat' };
   }
 
   return null; // Valid!
@@ -126,52 +126,79 @@ export const validatePhone = (
 
 // --- Zod Schema Helpers ---
 export const createPhoneSchemaForCountry = (country: CountryConfig) =>
-  z.string()
+  z
+    .string()
     .transform((v) => stripLeadingZero(sanitizeInput(v)))
-    .refine((v) => v.length >= country.minLength && v.length <= country.maxLength, {
-      message: `Must be ${country.minLength === country.maxLength ? country.minLength : country.minLength + "-" + country.maxLength} digits`,
-    })
+    .refine(
+      (v) => v.length >= country.minLength && v.length <= country.maxLength,
+      {
+        message: `Must be ${country.minLength === country.maxLength ? country.minLength : country.minLength + '-' + country.maxLength} digits`,
+      },
+    )
     .refine((v) => country.startsWith.some((p) => v.startsWith(p)), {
-      message: `Must start with: ${country.startsWith.join(", ")}`,
+      message: `Must start with: ${country.startsWith.join(', ')}`,
     })
     .refine((v) => country.regex.test(v), {
       message: `Invalid format for ${country.isoCode}`,
     });
 
-export const phonePayloadSchema = z.object({
-  countryCode: z.string().length(2),
-  nationalNumber: z.string().min(1),
-}).superRefine((data, ctx) => {
-  const country = getCountryByIso(data.countryCode);
-  if (!country) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Unsupported: ${data.countryCode}`, path: ["countryCode"] });
-    return;
-  }
-  const cleaned = stripLeadingZero(sanitizeInput(data.nationalNumber));
-  if (cleaned.length < country.minLength || cleaned.length > country.maxLength) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Must be ${country.minLength === country.maxLength ? country.minLength + " digits" : country.minLength + "-" + country.maxLength + " digits"}`, path: ["nationalNumber"] });
-    return;
-  }
-  if (!country.startsWith.some((p) => cleaned.startsWith(p))) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Must start with: ${country.startsWith.join(", ")}`, path: ["nationalNumber"] });
-    return;
-  }
-  if (!country.regex.test(cleaned)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Invalid format for ${country.isoCode}`, path: ["nationalNumber"] });
-  }
-});
+export const phonePayloadSchema = z
+  .object({
+    countryCode: z.string().length(2),
+    nationalNumber: z.string().min(1),
+  })
+  .superRefine((data, ctx) => {
+    const country = getCountryByIso(data.countryCode);
+    if (!country) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Unsupported: ${data.countryCode}`,
+        path: ['countryCode'],
+      });
+      return;
+    }
+    const cleaned = stripLeadingZero(sanitizeInput(data.nationalNumber));
+    if (
+      cleaned.length < country.minLength ||
+      cleaned.length > country.maxLength
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Must be ${country.minLength === country.maxLength ? country.minLength + ' digits' : country.minLength + '-' + country.maxLength + ' digits'}`,
+        path: ['nationalNumber'],
+      });
+      return;
+    }
+    if (!country.startsWith.some((p) => cleaned.startsWith(p))) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Must start with: ${country.startsWith.join(', ')}`,
+        path: ['nationalNumber'],
+      });
+      return;
+    }
+    if (!country.regex.test(cleaned)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid format for ${country.isoCode}`,
+        path: ['nationalNumber'],
+      });
+    }
+  });
 
 // --- Payload Builder ---
 export const validateAndBuildPayload = (
   isoCode: string,
-  rawInput: string
-): {
-  success: true;
-  data: PhonePayload;
-} | {
-  success: false;
-  error: PhoneValidationError;
-} => {
+  rawInput: string,
+):
+  | {
+      success: true;
+      data: PhonePayload;
+    }
+  | {
+      success: false;
+      error: PhoneValidationError;
+    } => {
   const validationError = validatePhone(isoCode, rawInput);
 
   if (validationError) {

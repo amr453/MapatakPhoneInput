@@ -1,32 +1,54 @@
 // Copyright (c) 2026 Mapatak Platform. All rights reserved.
 // PROPRIETARY & CONFIDENTIAL. Unauthorized copying, modification, or distribution is strictly prohibited.
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { COUNTRIES_CONFIG, getDefaultCountry } from "./countries-config";
-import { validateAndBuildPayload, sanitizeInput, stripLeadingZero, resolveErrorMessage } from "./phone-validation";
-import { normalizeForSearch } from "./normalize";
-import type { CountryConfig, MapatakPhoneInputProps, PhonePayload, PhoneValidationError } from "./types";
-import arData from "./i18n/ar.json";
-import enData from "./i18n/en.json";
-import esData from "./i18n/es.json";
-import urData from "./i18n/ur.json";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from 'react';
+import { COUNTRIES_CONFIG, getDefaultCountry } from './countries-config';
+import {
+  validateAndBuildPayload,
+  sanitizeInput,
+  stripLeadingZero,
+  resolveErrorMessage,
+} from './phone-validation';
+import { normalizeForSearch } from './normalize';
+import type {
+  CountryConfig,
+  MapatakPhoneInputProps,
+  PhonePayload,
+  PhoneValidationError,
+} from './types';
+import arData from './i18n/ar.json';
+import enData from './i18n/en.json';
+import esData from './i18n/es.json';
+import urData from './i18n/ur.json';
 
 // ---------------------------------------------------------------------------
 // Tiny class-name utility (local, zero-dependency)
 // ---------------------------------------------------------------------------
 
-type ClassArg = string | number | false | null | undefined | Record<string, boolean | undefined | null>;
+type ClassArg =
+  | string
+  | number
+  | false
+  | null
+  | undefined
+  | Record<string, boolean | undefined | null>;
 function cn(...args: ClassArg[]): string {
   const out: string[] = [];
   for (const a of args) {
     if (!a) continue;
-    if (typeof a === "string" || typeof a === "number") {
+    if (typeof a === 'string' || typeof a === 'number') {
       out.push(String(a));
-    } else if (typeof a === "object") {
+    } else if (typeof a === 'object') {
       for (const [k, v] of Object.entries(a)) if (v) out.push(k);
     }
   }
-  return out.join(" ");
+  return out.join(' ');
 }
 
 // ---------------------------------------------------------------------------
@@ -70,7 +92,7 @@ const SEARCH_HAYSTACK: Record<string, string> = (() => {
       const name = loc.countries[c.isoCode];
       if (name) parts.push(name);
     }
-    out[c.isoCode] = normalizeForSearch(parts.join(" "));
+    out[c.isoCode] = normalizeForSearch(parts.join(' '));
   }
   return out;
 })();
@@ -82,16 +104,16 @@ const SEARCH_HAYSTACK: Record<string, string> = (() => {
 
 const SIZE_MAP = {
   small: {
-    height: "h-10",              // 40px — matches inputSizes.md
-    text: "text-sm",             // 14px
-    paddingX: "px-3",            // 12px
-    labelSize: "text-xs",        // 12px
+    height: 'h-10', // 40px — matches inputSizes.md
+    text: 'text-sm', // 14px
+    paddingX: 'px-3', // 12px
+    labelSize: 'text-xs', // 12px
   },
   medium: {
-    height: "h-12",              // 48px — matches inputSizes.lg
-    text: "text-base",           // 16px
-    paddingX: "px-4",            // 16px
-    labelSize: "text-sm",        // 14px
+    height: 'h-12', // 48px — matches inputSizes.lg
+    text: 'text-base', // 16px
+    paddingX: 'px-4', // 16px
+    labelSize: 'text-sm', // 14px
   },
 } as const;
 
@@ -99,7 +121,13 @@ const SIZE_MAP = {
 // Inline icons (no MUI deps)
 // ---------------------------------------------------------------------------
 
-function ChevronDownIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+function ChevronDownIcon({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -109,7 +137,7 @@ function ChevronDownIcon({ className, style }: { className?: string; style?: Rea
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn("size-4 shrink-0", className)}
+      className={cn('size-4 shrink-0', className)}
       style={style}
       aria-hidden="true"
     >
@@ -118,7 +146,13 @@ function ChevronDownIcon({ className, style }: { className?: string; style?: Rea
   );
 }
 
-function SearchIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+function SearchIcon({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -128,7 +162,7 @@ function SearchIcon({ className, style }: { className?: string; style?: React.CS
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn("size-4 shrink-0", className)}
+      className={cn('size-4 shrink-0', className)}
       style={style}
       aria-hidden="true"
     >
@@ -144,7 +178,7 @@ function SearchIcon({ className, style }: { className?: string; style?: React.CS
 
 function useClickAway<T extends HTMLElement>(
   active: boolean,
-  onAway: (event: MouseEvent | TouchEvent) => void
+  onAway: (event: MouseEvent | TouchEvent) => void,
 ) {
   const ref = useRef<T>(null);
   useEffect(() => {
@@ -155,11 +189,11 @@ function useClickAway<T extends HTMLElement>(
         onAway(event);
       }
     };
-    document.addEventListener("mousedown", handler);
-    document.addEventListener("touchstart", handler);
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler);
     return () => {
-      document.removeEventListener("mousedown", handler);
-      document.removeEventListener("touchstart", handler);
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('touchstart', handler);
     };
   }, [active, onAway]);
   return ref;
@@ -170,39 +204,39 @@ function useClickAway<T extends HTMLElement>(
 // ---------------------------------------------------------------------------
 
 const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
-  defaultCountryIso = "SA",
-  value = "",
+  defaultCountryIso = 'SA',
+  value = '',
   onChange,
   onValidationChange,
   error: externalError = false,
-  helperText: externalHelperText = "",
+  helperText: externalHelperText = '',
   disabled = false,
-  locale = "en",
-  size = "medium",
+  locale = 'en',
+  size = 'medium',
   fullWidth = true,
   label,
   placeholder,
   required = false,
-  theme = "auto",
+  theme = 'auto',
 }) => {
-  const [selectedCountry, setSelectedCountry] = useState<CountryConfig>(
-    () => getDefaultCountry(defaultCountryIso)
+  const [selectedCountry, setSelectedCountry] = useState<CountryConfig>(() =>
+    getDefaultCountry(defaultCountryIso),
   );
   const [phoneNumber, setPhoneNumber] = useState<string>(value);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [validationError, setValidationError] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [validationError, setValidationError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const containerRef = useClickAway<HTMLDivElement>(dropdownOpen, () => {
     setDropdownOpen(false);
-    setSearchTerm("");
+    setSearchTerm('');
   });
 
   const localeData = LOCALE_MAP[locale] || LOCALE_MAP.en;
   const names = localeData.countries;
-  const isRtl = locale === "ar" || locale === "ur";
+  const isRtl = locale === 'ar' || locale === 'ur';
   const sz = SIZE_MAP[size];
 
   // ---- Sort + Filter (alphabetical by locale name) ----
@@ -215,7 +249,9 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
     if (searchTerm.trim()) {
       const q = normalizeForSearch(searchTerm);
       if (q) {
-        list = list.filter((c) => (SEARCH_HAYSTACK[c.isoCode] || "").includes(q));
+        list = list.filter((c) =>
+          (SEARCH_HAYSTACK[c.isoCode] || '').includes(q),
+        );
       }
     }
     return list;
@@ -227,7 +263,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
       const template = localeData.errors[err.key] || err.key;
       return resolveErrorMessage(template, err.params);
     },
-    [localeData]
+    [localeData],
   );
 
   // ---- Validation ----
@@ -235,14 +271,14 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
     (country: CountryConfig, raw: string) => {
       const cleaned = stripLeadingZero(sanitizeInput(raw));
       if (!cleaned) {
-        setValidationError("");
+        setValidationError('');
         onValidationChange?.(false);
         onChange?.(null);
         return;
       }
       const result = validateAndBuildPayload(country.isoCode, raw);
       if (result.success) {
-        setValidationError("");
+        setValidationError('');
         onValidationChange?.(true);
         onChange?.(result.data);
       } else {
@@ -251,7 +287,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
         onChange?.(null);
       }
     },
-    [onChange, onValidationChange, resolveValidationError]
+    [onChange, onValidationChange, resolveValidationError],
   );
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -265,7 +301,7 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
   const handleCountrySelect = (country: CountryConfig) => {
     setSelectedCountry(country);
     setDropdownOpen(false);
-    setSearchTerm("");
+    setSearchTerm('');
     emitPayload(country, phoneNumber);
     inputRef.current?.focus();
   };
@@ -293,13 +329,21 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
   const inputId = `mapatak-phone-${reactId}`;
 
   const themeClass =
-    theme === "light" ? "mpi-theme-light" : theme === "dark" ? "mpi-theme-dark" : "";
+    theme === 'light'
+      ? 'mpi-theme-light'
+      : theme === 'dark'
+        ? 'mpi-theme-dark'
+        : '';
 
   return (
     <div
       ref={containerRef}
       dir="ltr"
-      className={cn("mapatak-phone-root relative", themeClass, fullWidth ? "w-full" : "w-auto")}
+      className={cn(
+        'mapatak-phone-root relative',
+        themeClass,
+        fullWidth ? 'w-full' : 'w-auto',
+      )}
     >
       {/* Self-contained theming.
           - Light is the default palette (defined on `.mapatak-phone-root`).
@@ -315,22 +359,25 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
         <label
           htmlFor={inputId}
           className={cn(
-            "mb-1.5 block font-medium text-gray-700 dark:text-gray-200",
+            'mb-1.5 block font-medium text-gray-700 dark:text-gray-200',
             sz.labelSize,
-            disabled && "opacity-50"
+            disabled && 'opacity-50',
           )}
           style={{
-            display: "block",
+            display: 'block',
             marginBottom: 6,
             fontWeight: 600,
             fontSize: 13,
-            color: "var(--mpi-label)",
+            color: 'var(--mpi-label)',
             opacity: disabled ? 0.5 : 1,
           }}
         >
           {label}
           {required && (
-            <span style={{ marginInlineStart: 2, color: "var(--mpi-error)" }} aria-hidden="true">
+            <span
+              style={{ marginInlineStart: 2, color: 'var(--mpi-error)' }}
+              aria-hidden="true"
+            >
               *
             </span>
           )}
@@ -343,21 +390,24 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
           app's `@source` directive is restricted to its own src tree). */}
       <div
         className={cn(
-          "flex items-center rounded-lg border bg-white transition-colors",
-          "dark:bg-gray-800",
+          'flex items-center rounded-lg border bg-white transition-colors',
+          'dark:bg-gray-800',
           sz.height,
-          showError ? "border-red-500" : "border-slate-300 dark:border-slate-600",
-          disabled && "cursor-not-allowed opacity-50 bg-gray-100 dark:bg-gray-900"
+          showError
+            ? 'border-red-500'
+            : 'border-slate-300 dark:border-slate-600',
+          disabled &&
+            'cursor-not-allowed opacity-50 bg-gray-100 dark:bg-gray-900',
         )}
         style={{
-          display: "flex",
-          alignItems: "center",
-          width: "100%",
-          height: size === "small" ? 40 : 48,
-          background: disabled ? "var(--mpi-bg-disabled)" : "var(--mpi-bg)",
-          border: `1px solid ${showError ? "var(--mpi-error)" : "var(--mpi-border)"}`,
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          height: size === 'small' ? 40 : 48,
+          background: disabled ? 'var(--mpi-bg-disabled)' : 'var(--mpi-bg)',
+          border: `1px solid ${showError ? 'var(--mpi-error)' : 'var(--mpi-border)'}`,
           borderRadius: 12,
-          transition: "border-color 120ms ease, box-shadow 120ms ease",
+          transition: 'border-color 120ms ease, box-shadow 120ms ease',
         }}
       >
         {/* Flag / Dial code trigger */}
@@ -370,28 +420,28 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
           aria-label="Select country"
           dir="ltr"
           className={cn(
-            "inline-flex items-center gap-1 h-full shrink-0",
-            "ps-3 pe-2",
-            "text-gray-800 dark:text-gray-200",
-            "hover:bg-gray-50 dark:hover:bg-gray-700",
-            "rounded-s-lg",
-            "focus:outline-none",
-            "disabled:cursor-not-allowed"
+            'inline-flex items-center gap-1 h-full shrink-0',
+            'ps-3 pe-2',
+            'text-gray-800 dark:text-gray-200',
+            'hover:bg-gray-50 dark:hover:bg-gray-700',
+            'rounded-s-lg',
+            'focus:outline-none',
+            'disabled:cursor-not-allowed',
           )}
           style={{
-            display: "inline-flex",
-            alignItems: "center",
+            display: 'inline-flex',
+            alignItems: 'center',
             gap: 6,
-            height: "100%",
-            padding: "0 12px",
-            color: "var(--mpi-text)",
-            background: "transparent",
-            cursor: disabled ? "not-allowed" : "pointer",
+            height: '100%',
+            padding: '0 12px',
+            color: 'var(--mpi-text)',
+            background: 'transparent',
+            cursor: disabled ? 'not-allowed' : 'pointer',
             borderTopLeftRadius: 12,
             borderBottomLeftRadius: 12,
-            outline: "none",
-            border: "none",
-            fontFamily: "inherit",
+            outline: 'none',
+            border: 'none',
+            fontFamily: 'inherit',
           }}
         >
           <span style={{ fontSize: 20, lineHeight: 1 }} aria-hidden="true">
@@ -401,26 +451,26 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             style={{
               fontSize: 14,
               fontWeight: 600,
-              fontVariantNumeric: "tabular-nums",
-              color: "var(--mpi-text)",
+              fontVariantNumeric: 'tabular-nums',
+              color: 'var(--mpi-text)',
               minWidth: 36,
-              textAlign: "left",
+              textAlign: 'left',
             }}
           >
             +{selectedCountry.dialCode}
           </span>
-          <ChevronDownIcon style={{ color: "var(--mpi-text-secondary)" }} />
+          <ChevronDownIcon style={{ color: 'var(--mpi-text-secondary)' }} />
         </button>
 
         {/* Divider */}
         <span
           aria-hidden="true"
           style={{
-            display: "inline-block",
+            display: 'inline-block',
             width: 1,
             height: 22,
-            background: "var(--mpi-divider)",
-            margin: "0 4px",
+            background: 'var(--mpi-divider)',
+            margin: '0 4px',
             flexShrink: 0,
           }}
         />
@@ -438,29 +488,29 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
           required={required}
           placeholder={
             placeholder ||
-            `${(localeData.ui.examplePrefix as string | undefined) ?? ""}${selectedCountry.exampleNumber}`
+            `${(localeData.ui.examplePrefix as string | undefined) ?? ''}${selectedCountry.exampleNumber}`
           }
           maxLength={selectedCountry.maxLength + 1}
           aria-invalid={showError || undefined}
           aria-describedby={helperMsg ? `${inputId}-helper` : undefined}
           className={cn(
-            "flex-1 h-full bg-transparent outline-none border-0",
-            "text-gray-900 dark:text-white placeholder:text-gray-400",
+            'flex-1 h-full bg-transparent outline-none border-0',
+            'text-gray-900 dark:text-white placeholder:text-gray-400',
             sz.paddingX,
-            "disabled:cursor-not-allowed"
+            'disabled:cursor-not-allowed',
           )}
           style={{
             flex: 1,
             minWidth: 0,
-            height: "100%",
-            padding: "0 14px",
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            color: "var(--mpi-text)",
+            height: '100%',
+            padding: '0 14px',
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            color: 'var(--mpi-text)',
             fontSize: 14,
-            letterSpacing: "0.3px",
-            fontFamily: "inherit",
+            letterSpacing: '0.3px',
+            fontFamily: 'inherit',
           }}
         />
       </div>
@@ -469,15 +519,15 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
       {helperMsg && (
         <p
           id={`${inputId}-helper`}
-          role={showError ? "alert" : undefined}
+          role={showError ? 'alert' : undefined}
           className={cn(
-            "mt-1 text-xs",
-            showError ? "text-red-500" : "text-gray-500 dark:text-gray-400"
+            'mt-1 text-xs',
+            showError ? 'text-red-500' : 'text-gray-500 dark:text-gray-400',
           )}
           style={{
             marginTop: 4,
             fontSize: 12,
-            color: showError ? "var(--mpi-error)" : "var(--mpi-text-secondary)",
+            color: showError ? 'var(--mpi-error)' : 'var(--mpi-text-secondary)',
           }}
         >
           {helperMsg}
@@ -487,67 +537,67 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
       {/* Dropdown panel — fixed-height + scroll, even without Tailwind */}
       {dropdownOpen && (
         <div
-          dir={isRtl ? "rtl" : "ltr"}
+          dir={isRtl ? 'rtl' : 'ltr'}
           role="dialog"
           aria-label="Select country"
           className={cn(
-            "absolute inset-x-0 top-full z-50 mt-1",
-            "flex flex-col overflow-hidden",
-            "rounded-lg border border-gray-200 dark:border-gray-700",
-            "bg-white dark:bg-gray-800",
-            "shadow-lg"
+            'absolute inset-x-0 top-full z-50 mt-1',
+            'flex flex-col overflow-hidden',
+            'rounded-lg border border-gray-200 dark:border-gray-700',
+            'bg-white dark:bg-gray-800',
+            'shadow-lg',
           )}
           style={{
-            position: "absolute",
+            position: 'absolute',
             insetInlineStart: 0,
             insetInlineEnd: 0,
-            top: "100%",
+            top: '100%',
             marginTop: 6,
             zIndex: 50,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
             maxHeight: 320,
-            overflow: "hidden",
-            background: "var(--mpi-bg)",
-            border: "1px solid var(--mpi-border)",
+            overflow: 'hidden',
+            background: 'var(--mpi-bg)',
+            border: '1px solid var(--mpi-border)',
             borderRadius: 14,
-            boxShadow: "var(--mpi-shadow)",
+            boxShadow: 'var(--mpi-shadow)',
           }}
         >
           {/* Search */}
           <div
             className="flex items-center gap-2 border-b border-gray-200 p-3 dark:border-gray-700"
             style={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 8,
               padding: 12,
-              borderBottom: "1px solid var(--mpi-divider)",
+              borderBottom: '1px solid var(--mpi-divider)',
               flexShrink: 0,
             }}
           >
-            <SearchIcon style={{ color: "var(--mpi-text-secondary)" }} />
+            <SearchIcon style={{ color: 'var(--mpi-text-secondary)' }} />
             <input
               ref={searchRef}
               type="search"
-              dir={isRtl ? "rtl" : "ltr"}
+              dir={isRtl ? 'rtl' : 'ltr'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={localeData.ui.searchPlaceholder}
               className={cn(
-                "h-8 w-full bg-transparent outline-none border-0",
-                "text-sm text-gray-900 dark:text-white placeholder:text-gray-400"
+                'h-8 w-full bg-transparent outline-none border-0',
+                'text-sm text-gray-900 dark:text-white placeholder:text-gray-400',
               )}
               style={{
                 flex: 1,
                 minWidth: 0,
                 height: 32,
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                color: "var(--mpi-text)",
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: 'var(--mpi-text)',
                 fontSize: 14,
-                fontFamily: "inherit",
+                fontFamily: 'inherit',
               }}
             />
           </div>
@@ -561,10 +611,10 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             style={{
               flex: 1,
               minHeight: 0,
-              overflowY: "auto",
-              overscrollBehavior: "contain",
-              scrollbarWidth: "thin",
-              scrollbarColor: "var(--mpi-scroll-thumb) transparent",
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'var(--mpi-scroll-thumb) transparent',
             }}
           >
             {sortedAndFiltered.map((c) => {
@@ -578,32 +628,32 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                   aria-selected={active}
                   onClick={() => handleCountrySelect(c)}
                   className={cn(
-                    "flex w-full items-center gap-3 px-4 py-2 text-start text-sm transition-colors",
-                    "hover:bg-gray-100 dark:hover:bg-gray-700",
-                    "focus:outline-none focus-visible:bg-gray-100 dark:focus-visible:bg-gray-700",
-                    active && "bg-blue-50 dark:bg-blue-900/20"
+                    'flex w-full items-center gap-3 px-4 py-2 text-start text-sm transition-colors',
+                    'hover:bg-gray-100 dark:hover:bg-gray-700',
+                    'focus:outline-none focus-visible:bg-gray-100 dark:focus-visible:bg-gray-700',
+                    active && 'bg-blue-50 dark:bg-blue-900/20',
                   )}
                   style={{
-                    display: "flex",
-                    width: "100%",
-                    alignItems: "center",
+                    display: 'flex',
+                    width: '100%',
+                    alignItems: 'center',
                     gap: 12,
-                    padding: "10px 16px",
-                    background: active ? "var(--mpi-active)" : "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--mpi-text)",
+                    padding: '10px 16px',
+                    background: active ? 'var(--mpi-active)' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--mpi-text)',
                     fontSize: 14,
-                    textAlign: isRtl ? "right" : "left",
-                    fontFamily: "inherit",
+                    textAlign: isRtl ? 'right' : 'left',
+                    fontFamily: 'inherit',
                   }}
                 >
                   <span
                     aria-hidden="true"
                     style={{
-                      display: "inline-block",
+                      display: 'inline-block',
                       width: 28,
-                      textAlign: "center",
+                      textAlign: 'center',
                       fontSize: 20,
                       lineHeight: 1,
                       flexShrink: 0,
@@ -615,10 +665,10 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                     style={{
                       flex: 1,
                       minWidth: 0,
-                      color: "var(--mpi-text)",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      color: 'var(--mpi-text)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                       fontWeight: active ? 600 : 400,
                     }}
                   >
@@ -627,9 +677,9 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
                   <span
                     dir="ltr"
                     style={{
-                      fontVariantNumeric: "tabular-nums",
+                      fontVariantNumeric: 'tabular-nums',
                       fontSize: 12,
-                      color: "var(--mpi-text-secondary)",
+                      color: 'var(--mpi-text-secondary)',
                       flexShrink: 0,
                     }}
                   >
@@ -642,10 +692,10 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
             {sortedAndFiltered.length === 0 && (
               <div
                 style={{
-                  padding: "32px 16px",
-                  textAlign: "center",
+                  padding: '32px 16px',
+                  textAlign: 'center',
                   fontSize: 13,
-                  color: "var(--mpi-text-muted)",
+                  color: 'var(--mpi-text-muted)',
                 }}
               >
                 {localeData.ui.noResults}
@@ -659,4 +709,3 @@ const MapatakPhoneInput: React.FC<MapatakPhoneInputProps> = ({
 };
 
 export default MapatakPhoneInput;
-export { MapatakPhoneInput };

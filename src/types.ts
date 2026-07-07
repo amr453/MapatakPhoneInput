@@ -21,11 +21,11 @@ export interface PhonePayload {
 }
 
 export type PhoneErrorKey =
-  | "required"
-  | "tooShort"
-  | "tooLong"
-  | "invalidPrefix"
-  | "invalidFormat";
+  | 'required'
+  | 'tooShort'
+  | 'tooLong'
+  | 'invalidPrefix'
+  | 'invalidFormat';
 
 export interface PhoneValidationError {
   key: PhoneErrorKey;
@@ -40,8 +40,8 @@ export interface MapatakPhoneInputProps {
   error?: boolean;
   helperText?: string;
   disabled?: boolean;
-  locale?: "ar" | "en" | "es" | "ur";
-  size?: "small" | "medium";
+  locale?: 'ar' | 'en' | 'es' | 'ur';
+  size?: 'small' | 'medium';
   fullWidth?: boolean;
   label?: string;
   placeholder?: string;
@@ -55,5 +55,5 @@ export interface MapatakPhoneInputProps {
    * (e.g. split-panel sign-in / sign-up forms) so the phone input stays
    * visually consistent with its container.
    */
-  theme?: "auto" | "light" | "dark";
+  theme?: 'auto' | 'light' | 'dark';
 }

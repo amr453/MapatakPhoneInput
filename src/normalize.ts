@@ -21,25 +21,25 @@
  * Pure + idempotent.
  */
 export function normalizeForSearch(input: string): string {
-  if (!input) return "";
-  let s = input.normalize("NFKC");
+  if (!input) return '';
+  let s = input.normalize('NFKC');
 
   // Arabic diacritics (harakat) + dagger alef + tatweel.
-  s = s.replace(/[ً-ٰٟـ]/g, "");
+  s = s.replace(/[ً-ٰٟـ]/g, '');
 
   // Alef variants → bare alef.
-  s = s.replace(/[آأإٱٲٳ]/g, "ا");
+  s = s.replace(/[آأإٱٲٳ]/g, 'ا');
   // Alef maksura → ya.
-  s = s.replace(/ى/g, "ي");
+  s = s.replace(/ى/g, 'ي');
   // Ta marbuta → ha.
-  s = s.replace(/ة/g, "ه");
+  s = s.replace(/ة/g, 'ه');
   // Hamza-on-waw / hamza-on-ya → bare waw / ya.
-  s = s.replace(/ؤ/g, "و").replace(/ئ/g, "ي");
+  s = s.replace(/ؤ/g, 'و').replace(/ئ/g, 'ي');
   // Lone hamza dropped.
-  s = s.replace(/ء/g, "");
+  s = s.replace(/ء/g, '');
 
   // Latin diacritics: NFD then strip combining marks.
-  s = s.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 
   return s.toLowerCase().trim();
 }
